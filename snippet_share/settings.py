@@ -82,7 +82,7 @@ MIDDLEWARE = [
 CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.filebased.FileBasedCache",
-        "LOCATION": "/home/username/django_cache",
+        "LOCATION": "/home/SnippetShare/django_cache",
         "TIMEOUT": 60 * 15,
         "OPTIONS": {
             "MAX_ENTRIES": 1000
