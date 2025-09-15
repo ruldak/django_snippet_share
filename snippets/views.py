@@ -56,24 +56,24 @@ class SnippetViewSet(viewsets.ModelViewSet):
             data = response.data
 
             # simpan ke cache 5 menit
-            cache.set(cache_key, data, timeout=300)	
+            cache.set(cache_key, data, timeout=300) 
 
         return Response(data)
 
     def create(self, request, *args, **kwargs):
-	    response = super().create(request, *args, **kwargs)
-	    cache.clear()
-	    return response
+        response = super().create(request, *args, **kwargs)
+        cache.clear()
+        return response
 
-	def update(self, request, *args, **kwargs):
-	    response = super().update(request, *args, **kwargs)
-	    cache.clear()
-	    return response
+    def update(self, request, *args, **kwargs):
+        response = super().update(request, *args, **kwargs)
+        cache.clear()
+        return response
 
-	def destroy(self, request, *args, **kwargs):
-	    response = super().destroy(request, *args, **kwargs)
-	    cache.clear()
-	    return response
+    def destroy(self, request, *args, **kwargs):
+        response = super().destroy(request, *args, **kwargs)
+        cache.clear()
+        return response
     
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
