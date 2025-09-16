@@ -19,9 +19,6 @@ class Snippet(models.Model):
         ('css', 'CSS'),
         ('elixir', 'Elixir'),
         ('php', 'PHP'),
-        ('vue', 'Vue'),
-        ('laravel', 'Laravel'),
-        ('phoenix', 'Phoenix'),
         ('django', 'Django'),
         ('plaintext', 'Plain Text')
     ]
