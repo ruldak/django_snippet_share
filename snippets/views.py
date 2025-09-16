@@ -1,4 +1,4 @@
-from rest_framework import viewsets, status, permissions
+from rest_framework import viewsets, status, permissions, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.utils.decorators import method_decorator
@@ -6,6 +6,7 @@ from django.views.decorators.vary import vary_on_cookie
 from django.db.models import Q
 from django.conf import settings
 from django.core.cache import cache
+from django.utils import timezone
 
 from .models import Snippet, AccessLog
 from .serializers import SnippetSerializer, SnippetCreateSerializer, SnippetListSerializer
@@ -17,6 +18,8 @@ class SnippetViewSet(viewsets.ModelViewSet):
     """
     queryset = Snippet.objects.all()
     permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
+    filter_backends = [filters.OrderingFilter]
+    ordering_fields = ['created_at', 'title']
     
     def get_serializer_class(self):
         if self.action == 'create':
@@ -28,11 +31,18 @@ class SnippetViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         """
         Mengembalikan queryset yang difilter berdasarkan visibility dan user.
-        Untuk user terautentikasi, tampilkan semua snippet milik mereka plus public.
+        Untuk user terautentikasi, tampilkan semua snippet milik mereka.
         Untuk user anonymous, hanya tampilkan snippet public.
         """
         user = self.request.user
         queryset = Snippet.objects.select_related('user').prefetch_related('access_logs')
+        language = self.request.query_params.get('language')
+        visibility = self.request.query_params.get('visibility')
+
+        if language:
+            queryset = queryset.filter(language=language)
+        if visibility:
+            queryset = queryset.filter(visibility=visibility)
         
         # Filter out expired snippets
         queryset = queryset.filter(
@@ -40,8 +50,8 @@ class SnippetViewSet(viewsets.ModelViewSet):
         )
         
         if user.is_authenticated:
-            # Untuk user terautentikasi, tampilkan semua milik mereka plus public
-            return queryset.filter(Q(visibility='public') | Q(user=user))
+            # Untuk user terautentikasi, hanya tampilkan snippet milik mereka
+            return queryset.filter(user=user)
         else:
             # Untuk anonymous user, hanya tampilkan public
             return queryset.filter(visibility='public')
