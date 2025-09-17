@@ -93,12 +93,15 @@ class SnippetViewSet(viewsets.ModelViewSet):
         # Log access
         snippet = self.get_object()
         
-        # Buat access log
-        AccessLog.objects.create(
-            snippet=snippet,
-            ip_address=self.get_client_ip(request),
-            user_agent=request.META.get('HTTP_USER_AGENT', '')
-        )
+        try:
+            log = AccessLog.objects.create(
+                snippet=snippet,
+                ip_address=self.get_client_ip(request),
+                user_agent=request.META.get('HTTP_USER_AGENT', '')
+            )
+            cache.clear()
+        except DatabaseError as e:
+            print("Failed to create access log:", str(e))
         
         return super().retrieve(request, *args, **kwargs)
     

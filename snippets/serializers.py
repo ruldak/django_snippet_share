@@ -2,6 +2,11 @@ from rest_framework import serializers
 from .models import Snippet, AccessLog
 from django.utils import timezone
 
+class AccessLogSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AccessLog
+        fields = ['id', 'ip_address', 'user_agent', 'accessed_at']
+
 class SnippetSerializer(serializers.ModelSerializer):
     user = serializers.ReadOnlyField(source='user.username')
     is_expired = serializers.ReadOnlyField()
@@ -28,11 +33,12 @@ class SnippetListSerializer(serializers.ModelSerializer):
     user = serializers.ReadOnlyField(source='user.username')
     preview = serializers.SerializerMethodField()
     is_expired = serializers.ReadOnlyField()
+    access_log_count = serializers.IntegerField(source='access_logs.count', read_only=True)
     
     class Meta:
         model = Snippet
         fields = ['id', 'user', 'title', 'preview', 'language', 
-                 'visibility', 'created_at', 'is_expired']
+                 'visibility', 'created_at', 'is_expired', 'access_log_count']
     
     def get_preview(self, obj):
         # Hanya mengambil 100 karakter pertama sebagai preview
