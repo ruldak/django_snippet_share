@@ -10,12 +10,13 @@ class AccessLogSerializer(serializers.ModelSerializer):
 class SnippetSerializer(serializers.ModelSerializer):
     user = serializers.ReadOnlyField(source='user.username')
     is_expired = serializers.ReadOnlyField()
+    access_log_count = serializers.IntegerField(read_only=True)
     
     class Meta:
         model = Snippet
         fields = ['id', 'user', 'title', 'content', 'language', 
-                 'visibility', 'expires_at', 'created_at', 'updated_at', 'is_expired']
-        read_only_fields = ['id', 'user', 'created_at', 'updated_at', 'is_expired']
+                 'visibility', 'expires_at', 'created_at', 'updated_at', 'is_expired', 'access_log_count']
+        read_only_fields = ['id', 'user', 'created_at', 'updated_at', 'is_expired', 'access_log_count']
     
     def validate(self, data):
         # Validasi expires_at harus di masa depan jika disediakan
@@ -33,7 +34,7 @@ class SnippetListSerializer(serializers.ModelSerializer):
     user = serializers.ReadOnlyField(source='user.username')
     preview = serializers.SerializerMethodField()
     is_expired = serializers.ReadOnlyField()
-    access_log_count = serializers.IntegerField(source='access_logs.count', read_only=True)
+    access_log_count = serializers.IntegerField(read_only=True)
     
     class Meta:
         model = Snippet

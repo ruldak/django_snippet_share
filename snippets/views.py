@@ -3,7 +3,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.utils.decorators import method_decorator
 from django.views.decorators.vary import vary_on_cookie
-from django.db.models import Q
+from django.db.models import Q, Count
 from django.conf import settings
 from django.core.cache import cache
 from django.utils import timezone
@@ -19,7 +19,7 @@ class SnippetViewSet(viewsets.ModelViewSet):
     queryset = Snippet.objects.all()
     permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
     filter_backends = [filters.OrderingFilter]
-    ordering_fields = ['created_at', 'title']
+    ordering_fields = ['created_at', 'title', 'access_log_count']
     
     def get_serializer_class(self):
         if self.action == 'create':
@@ -38,6 +38,8 @@ class SnippetViewSet(viewsets.ModelViewSet):
         queryset = Snippet.objects.select_related('user').prefetch_related('access_logs')
         language = self.request.query_params.get('language')
         visibility = self.request.query_params.get('visibility')
+
+        queryset = queryset.annotate(access_log_count=Count('access_logs'))
 
         if language:
             queryset = queryset.filter(language=language)
