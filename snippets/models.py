@@ -19,7 +19,7 @@ class Snippet(models.Model):
         ('css', 'CSS'),
         ('elixir', 'Elixir'),
         ('php', 'PHP'),
-        ('django', 'Django'),
+        ('django', 'Django Template'),
         ('plaintext', 'Plain Text')
     ]
     
