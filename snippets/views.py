@@ -1,5 +1,6 @@
 from rest_framework import viewsets, status, permissions, filters
 from rest_framework.decorators import action
+from rest_framework.generics import ListAPIView, RetrieveAPIView
 from rest_framework.response import Response
 from django.utils.decorators import method_decorator
 from django.views.decorators.vary import vary_on_cookie
@@ -7,10 +8,75 @@ from django.db.models import Q, Count
 from django.conf import settings
 from django.core.cache import cache
 from django.utils import timezone
+from django.db import DatabaseError
 
 from .models import Snippet, AccessLog
 from .serializers import SnippetSerializer, SnippetCreateSerializer, SnippetListSerializer
 from .permissions import IsOwnerOrReadOnly
+
+class SnippetDetailView(RetrieveAPIView):
+    queryset = Snippet.objects.all()
+    serializer_class = SnippetSerializer
+    lookup_field = "id"
+
+    def get(self, request, *args, **kwargs):
+        # Log access
+        snippet = self.get_object()
+        
+        try:
+            log = AccessLog.objects.create(
+                snippet=snippet,
+                ip_address=self.get_client_ip(request),
+                user_agent=request.META.get('HTTP_USER_AGENT', '')
+            )
+            cache.clear()
+        except DatabaseError as e:
+            print("Failed to create access log:", str(e))
+        
+        return super().get(request, *args, **kwargs)
+
+    def get_client_ip(self, request):
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            ip = x_forwarded_for.split(',')[0]
+        else:
+            ip = request.META.get('REMOTE_ADDR')
+        return ip
+
+class SnippetSearchAPIView(ListAPIView):
+    serializer_class = SnippetListSerializer
+    queryset = Snippet.objects.all()
+    filter_backends = [filters.OrderingFilter]
+    ordering_fields = ['created_at', 'title', 'access_log_count']
+
+    def get_queryset(self):
+        query = self.request.query_params.get("q", "")
+        language = self.request.query_params.get('language')
+        visibility = self.request.query_params.get('visibility')
+
+        qs = Snippet.objects.select_related('user').prefetch_related('access_logs')
+        qs = qs.annotate(access_log_count=Count('access_logs'))
+
+        if query:
+            qs = qs.filter(Q(title__icontains=query) | Q(content__icontains=query) | Q(language__icontains=query))
+        if language:
+            qs = qs.filter(language=language)
+        if visibility:
+            qs = qs.filter(visibility=visibility)
+
+        return qs
+
+    def get(self, request, *args, **kwargs):
+        query_params = request.query_params.urlencode()
+        cache_key = f"snippet_search_{query_params}"
+        data = cache.get(cache_key)
+
+        if not data:
+            response = super().get(request, *args, **kwargs)
+            data = response.data
+            cache.set(cache_key, data, timeout=300)
+
+        return Response(data)
 
 class SnippetViewSet(viewsets.ModelViewSet):
     """
@@ -59,7 +125,8 @@ class SnippetViewSet(viewsets.ModelViewSet):
             return queryset.filter(visibility='public')
     
     def list(self, request, *args, **kwargs):
-        cache_key = f"snippets_list_{request.get_full_path()}"
+        query_params = request.query_params.urlencode()
+        cache_key = f"snippets_list_{request.user.username}_{query_params}"
         data = cache.get(cache_key)
 
         if not data:
