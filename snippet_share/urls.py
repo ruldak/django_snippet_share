@@ -23,6 +23,7 @@ from rest_framework_simplejwt.views import (
     TokenRefreshView,
 )
 from users.views import RegisterView, UserProfileView
+from snippets.views import SnippetSearchAPIView, SnippetDetailView
 
 router = DefaultRouter()
 router.register(r'snippets', SnippetViewSet, basename='snippet')
@@ -35,4 +36,6 @@ urlpatterns = [
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path("api/profile/", UserProfileView.as_view(), name="user-profile"),
     path('api/', include(router.urls)),
+    path("api/search/", SnippetSearchAPIView.as_view(), name="snippets-search"),
+    path("api/snippet/detail/<uuid:id>/", SnippetDetailView.as_view(), name="snippet-detail"),
 ]
