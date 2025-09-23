@@ -10,6 +10,7 @@ __pycache__/
 *.pyo
 *.sqlite3
 *.db
+*.bak
 
 # Django migrations
 */migrations/*.py
