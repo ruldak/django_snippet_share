@@ -20,7 +20,6 @@ class SnippetDetailView(RetrieveAPIView):
     lookup_field = "id"
 
     def get(self, request, *args, **kwargs):
-        # Log access
         snippet = self.get_object()
         
         try:
@@ -80,7 +79,7 @@ class SnippetSearchAPIView(ListAPIView):
 
 class SnippetViewSet(viewsets.ModelViewSet):
     """
-    ViewSet untuk mengelola Snippet.
+    A ViewSet for managing Snippets.
     """
     queryset = Snippet.objects.all()
     permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
@@ -96,9 +95,9 @@ class SnippetViewSet(viewsets.ModelViewSet):
     
     def get_queryset(self):
         """
-        Mengembalikan queryset yang difilter berdasarkan visibility dan user.
-        Untuk user terautentikasi, tampilkan semua snippet milik mereka.
-        Untuk user anonymous, hanya tampilkan snippet public.
+        Returns a filtered queryset based on visibility and user.
+        For authenticated users, it shows all their snippets.
+        For anonymous users, it only shows public snippets.
         """
         user = self.request.user
         queryset = Snippet.objects.select_related('user').prefetch_related('access_logs')
@@ -112,16 +111,13 @@ class SnippetViewSet(viewsets.ModelViewSet):
         if visibility:
             queryset = queryset.filter(visibility=visibility)
         
-        # Filter out expired snippets
         queryset = queryset.filter(
             Q(expires_at__isnull=True) | Q(expires_at__gt=timezone.now())
         )
         
         if user.is_authenticated:
-            # Untuk user terautentikasi, hanya tampilkan snippet milik mereka
             return queryset.filter(user=user)
         else:
-            # Untuk anonymous user, hanya tampilkan public
             return queryset.filter(visibility='public')
     
     def list(self, request, *args, **kwargs):
@@ -130,11 +126,9 @@ class SnippetViewSet(viewsets.ModelViewSet):
         data = cache.get(cache_key)
 
         if not data:
-            # ambil data normal (pakai super().list)
             response = super().list(request, *args, **kwargs)
             data = response.data
 
-            # simpan ke cache 5 menit
             cache.set(cache_key, data, timeout=300) 
 
         return Response(data)
@@ -159,7 +153,6 @@ class SnippetViewSet(viewsets.ModelViewSet):
         cache.clear()
     
     def retrieve(self, request, *args, **kwargs):
-        # Log access
         snippet = self.get_object()
         
         try:
@@ -176,10 +169,9 @@ class SnippetViewSet(viewsets.ModelViewSet):
     
     @action(detail=True, methods=['get'])
     def analytics(self, request, pk=None):
-        """Endpoint untuk mendapatkan analytics snippet"""
+        """Endpoint to get snippet analytics."""
         snippet = self.get_object()
         
-        # Cek permission
         if snippet.user != request.user and snippet.visibility != 'public':
             return Response(
                 {"detail": "You do not have permission to access this resource."},
@@ -189,7 +181,6 @@ class SnippetViewSet(viewsets.ModelViewSet):
         access_logs = snippet.access_logs.all()
         total_views = access_logs.count()
         
-        # Hitung views per hari (7 hari terakhir)
         from django.db.models.functions import TruncDate
         from django.db.models import Count
         from datetime import timedelta
