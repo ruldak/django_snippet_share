@@ -19,7 +19,6 @@ class SnippetSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'user', 'created_at', 'updated_at', 'is_expired', 'access_log_count']
     
     def validate(self, data):
-        # Validasi expires_at harus di masa depan jika disediakan
         expires_at = data.get('expires_at')
         if expires_at and expires_at <= timezone.now():
             raise serializers.ValidationError("Expiration date must be in the future")
@@ -42,5 +41,4 @@ class SnippetListSerializer(serializers.ModelSerializer):
                  'visibility', 'created_at', 'is_expired', 'access_log_count']
     
     def get_preview(self, obj):
-        # Hanya mengambil 100 karakter pertama sebagai preview
         return obj.content[:100] + '...' if len(obj.content) > 100 else obj.content
