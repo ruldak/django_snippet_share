@@ -57,8 +57,8 @@ Here is a summary of the available API endpoints.
 
 1.  **Clone the repository:**
     ```bash
-    git clone <your-repository-url>
-    cd snippet_share
+    git clone https://github.com/ruldak/django_snippet_share.git your_directory
+    cd your_directory
     ```
 
 2.  **Create and activate a virtual environment:**
