@@ -13,6 +13,7 @@ from django.db import DatabaseError
 from .models import Snippet, AccessLog
 from .serializers import SnippetSerializer, SnippetCreateSerializer, SnippetListSerializer
 from .permissions import IsOwnerOrReadOnly
+from snippet_share.utils import get_client_ip
 
 class SnippetDetailView(RetrieveAPIView):
     queryset = Snippet.objects.all()
@@ -31,7 +32,7 @@ class SnippetDetailView(RetrieveAPIView):
         try:
             log = AccessLog.objects.create(
                 snippet=snippet,
-                ip_address=self.get_client_ip(request),
+                ip_address=get_client_ip(request),
                 user_agent=request.META.get('HTTP_USER_AGENT', '')
             )
             cache.clear()
@@ -39,14 +40,6 @@ class SnippetDetailView(RetrieveAPIView):
             print("Failed to create access log:", str(e))
         
         return super().get(request, *args, **kwargs)
-
-    def get_client_ip(self, request):
-        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
-        if x_forwarded_for:
-            ip = x_forwarded_for.split(',')[0]
-        else:
-            ip = request.META.get('REMOTE_ADDR')
-        return ip
 
 class SnippetSearchAPIView(ListAPIView):
     serializer_class = SnippetListSerializer
@@ -170,7 +163,7 @@ class SnippetViewSet(viewsets.ModelViewSet):
         try:
             log = AccessLog.objects.create(
                 snippet=snippet,
-                ip_address=self.get_client_ip(request),
+                ip_address=get_client_ip(request),
                 user_agent=request.META.get('HTTP_USER_AGENT', '')
             )
             cache.clear()
@@ -210,11 +203,3 @@ class SnippetViewSet(viewsets.ModelViewSet):
             'total_views': total_views,
             'daily_views': daily_views
         })
-    
-    def get_client_ip(self, request):
-        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
-        if x_forwarded_for:
-            ip = x_forwarded_for.split(',')[0]
-        else:
-            ip = request.META.get('REMOTE_ADDR')
-        return ip
