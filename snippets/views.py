@@ -9,7 +9,6 @@ from django.conf import settings
 from django.core.cache import cache
 from django.utils import timezone
 from django.db import DatabaseError
-
 from .models import Snippet, AccessLog
 from .serializers import SnippetSerializer, SnippetCreateSerializer, SnippetListSerializer
 from .permissions import IsOwnerOrReadOnly
@@ -203,3 +202,5 @@ class SnippetViewSet(viewsets.ModelViewSet):
             'total_views': total_views,
             'daily_views': daily_views
         })
+
+print("ini test")
