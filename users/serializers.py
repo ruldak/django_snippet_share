@@ -6,7 +6,6 @@ def x(text: str):
     print(f"hello {text}")
 
 x(14)
-x("eko")
 
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
