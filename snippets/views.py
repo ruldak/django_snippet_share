@@ -22,10 +22,10 @@ class SnippetDetailView(RetrieveAPIView):
     def get(self, request, *args, **kwargs):
         snippet = self.get_object()
 
-        if snippet.visibility = 'private' and snippet.user != request.user:
+        if snippet.visibility == 'private' and snippet.user != request.user:
             return Response(
                 {"detail": "Not found."},
-                status=status.HTTP_404_NOT_FOUND
+                status=status.HTTP_404_NOT_FOUN
             )
         
         try:
