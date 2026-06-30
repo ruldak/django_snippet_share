@@ -25,7 +25,7 @@ class SnippetDetailView(RetrieveAPIView):
         if snippet.visibility == 'private' and snippet.user != request.user:
             return Response(
                 {"detail": "Not found."},
-                status=status.HTTP_404_NOT_FOUND
+                status=status.HTTP_404_NOT_FOUN
             )
         
         try:
