@@ -11,6 +11,9 @@ class SnippetSerializer(serializers.ModelSerializer):
     user = serializers.ReadOnlyField(source='user.username')
     is_expired = serializers.ReadOnlyField()
     access_log_count = serializers.IntegerField(read_only=True)
+
+    print("halo")
+    print("============)
     
     class Meta:
         model = Snippet
